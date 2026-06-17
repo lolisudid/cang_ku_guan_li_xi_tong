@@ -1,0 +1,516 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>超市货物仓库管理系统 V1.0</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://unpkg.com/vue-router@4/dist/vue-router.global.prod.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: #f0f2f5; color: #333; }
+    .login-page { display: flex; align-items: center; justify-content: center; height: 100vh; }
+    .login-card { background: #fff; border-radius: 8px; padding: 40px; width: 380px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+    .login-card h2 { text-align: center; margin-bottom: 24px; color: #303133; }
+    .form-group { margin-bottom: 18px; }
+    .form-group label { display: block; margin-bottom: 6px; color: #606266; font-size: 14px; }
+    .form-group input { width: 100%; padding: 10px 12px; border: 1px solid #dcdfe6; border-radius: 4px; font-size: 14px; outline: none; }
+    .form-group input:focus { border-color: #409eff; }
+    .btn { display: inline-block; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; text-align: center; }
+    .btn-primary { background: #409eff; color: #fff; }
+    .btn-block { width: 100%; }
+    .btn-primary:hover { background: #66b1ff; }
+    .btn-danger { background: #f56c6c; color: #fff; }
+    .btn-danger:hover { background: #f78989; }
+    .btn-warning { background: #e6a23c; color: #fff; }
+    .btn-small { padding: 6px 12px; font-size: 12px; white-space: nowrap; flex-shrink: 0; }
+    .btn-text { background: none; border: 1px solid #dcdfe6; padding: 6px 12px; font-size: 12px; border-radius: 4px; cursor: pointer; }
+    .btn-text:hover { color: #409eff; border-color: #409eff; }
+    .layout { display: flex; height: 100vh; }
+    .sidebar { width: 220px; background: #304156; color: #bfcbd9; flex-shrink: 0; }
+    .sidebar h3 { padding: 20px; font-size: 16px; border-bottom: 1px solid #1f2d3d; color: #fff; }
+    .sidebar ul { list-style: none; padding: 0; }
+    .sidebar li { padding: 14px 20px; cursor: pointer; font-size: 14px; }
+    .sidebar li:hover, .sidebar li.active { background: rgba(255,255,255,0.08); color: #409eff; }
+    .main { flex: 1; display: flex; flex-direction: column; }
+    .header { height: 56px; background: #fff; border-bottom: 1px solid #e6e6e6; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
+    .header .title { font-size: 16px; font-weight: bold; }
+    .content { flex: 1; padding: 20px; overflow-y: auto; }
+    .card { background: #fff; border-radius: 4px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 16px; font-weight: bold; flex-shrink: 0; }
+    .card-header span { flex-shrink: 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th { background: #f5f7fa; color: #606266; padding: 12px 8px; text-align: left; font-weight: normal; border-bottom: 1px solid #ebeef5; }
+    td { padding: 12px 8px; border-bottom: 1px solid #ebeef5; }
+    tr:hover td { background: #f5f7fa; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+    .tag-success { background: #f0f9eb; color: #67c23a; }
+    .tag-danger { background: #fef0f0; color: #f56c6c; }
+    .tag-info { background: #f4f4f5; color: #909399; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+    .stat-card { background: #fff; border-radius: 4px; padding: 20px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+    .stat-card h2 { font-size: 28px; color: #303133; }
+    .stat-card p { color: #909399; margin-top: 4px; }
+    .modal-mask { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal { background: #fff; border-radius: 8px; width: 500px; max-height: 80vh; overflow-y: auto; }
+    .modal-header { padding: 16px 20px; border-bottom: 1px solid #ebeef5; font-size: 16px; font-weight: bold; }
+    .modal-body { padding: 20px; }
+    .modal-footer { padding: 12px 20px; border-top: 1px solid #ebeef5; text-align: right; }
+    .modal-footer .btn { margin-left: 8px; }
+    .pagination { display: flex; justify-content: center; align-items: center; margin-top: 16px; gap: 8px; }
+    .pagination .btn { min-width: 32px; }
+    .search-bar { margin-bottom: 16px; display: flex; gap: 8px; flex-shrink: 0; }
+    .search-bar input { flex: 1; padding: 8px 12px; border: 1px solid #dcdfe6; border-radius: 4px; font-size: 14px; max-width: 300px; }
+    .flex { display: flex; }
+    .flex-between { display: flex; justify-content: space-between; }
+    .gap-8 { gap: 8px; }
+    .mb-16 { margin-bottom: 16px; }
+    .ml-8 { margin-left: 8px; }
+    .text-right { text-align: right; }
+    .text-center { text-align: center; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div v-if="!loggedIn" class="login-page">
+      <div class="login-card">
+        <h2>超市货物仓库管理系统</h2>
+        <div class="form-group"><label>工号</label><input v-model="loginId" placeholder="请输入工号" @keyup.enter="doLogin"></div>
+        <div class="form-group"><label>密码</label><input v-model="loginPwd" type="password" placeholder="请输入密码" @keyup.enter="doLogin"></div>
+        <div class="form-group"><button class="btn btn-primary btn-block" @click="doLogin" :disabled="loading">{{ loading ? '登录中...' : '登录' }}</button></div>
+        <div style="color:#f56c6c;font-size:13px;text-align:center;" v-if="loginError">{{ loginError }}</div>
+      </div>
+    </div>
+
+    <div v-else class="layout">
+      <div class="sidebar">
+        <h3>仓库管理 V1.0</h3>
+        <ul>
+          <li :class="{active: page==='dashboard'}" @click="page='dashboard'">📊 首页</li>
+          <li v-if="canGoods" :class="{active: page==='goods'}" @click="page='goods'">📦 商品管理</li>
+          <li v-if="canWarehouse" :class="{active: page==='warehouse'}" @click="page='warehouse'">🏭 仓库管理</li>
+          <li v-if="canInStock" :class="{active: page==='instock'}" @click="page='instock'">📥 入库管理</li>
+          <li v-if="canOutStock" :class="{active: page==='outstock'}" @click="page='outstock'">📤 出库管理</li>
+          <li :class="{active: page==='inventory'}" @click="page='inventory'">📋 库存查询</li>
+          <li v-if="canSupplier" :class="{active: page==='supplier'}" @click="page='supplier'">🤝 供应商管理</li>
+        </ul>
+      </div>
+      <div class="main">
+        <div class="header">
+          <span class="title">{{ pageTitle }}</span>
+          <div><span class="tag tag-info">{{ roleLabel }}</span><span class="ml-8">{{ staffName }}</span><button class="btn btn-danger btn-small ml-8" @click="logout">退出</button></div>
+        </div>
+        <div class="content">
+          <!-- 首页 -->
+          <div v-if="page==='dashboard'">
+            <div class="stats">
+              <div class="stat-card"><h2>{{ totals.goods }}</h2><p>商品总数</p></div>
+              <div class="stat-card"><h2>{{ totals.warehouses }}</h2><p>仓库数量</p></div>
+              <div class="stat-card"><h2>{{ totals.suppliers }}</h2><p>供应商</p></div>
+              <div class="stat-card"><h2>{{ totals.warnings }}</h2><p>低库存预警</p></div>
+            </div>
+            <div class="card">
+              <h4>欢迎使用超市货物仓库管理系统 V1.0</h4>
+              <p style="margin-top:8px;color:#606266;">当前登录：{{ staffName }}（{{ staffRole }}）</p>
+              <p style="margin-top:4px;color:#606266;">系统提供商品管理、仓库管理、入库/出库管理、库存查询、供应商管理等核心功能。</p>
+            </div>
+          </div>
+
+          <!-- 商品管理 -->
+          <div v-if="page==='goods'">
+            <div class="card">
+              <div class="card-header"><span>商品管理</span><button v-if="isAdmin" class="btn btn-primary btn-small" @click="openGoodsForm(null)">新增商品</button></div>
+              <div class="search-bar"><input v-model="goodsSearch" placeholder="按名称搜索" @input="loadGoods"><button class="btn btn-primary btn-small" @click="loadGoods">搜索</button></div>
+              <table><thead><tr><th>编号</th><th>名称</th><th>规格</th><th>单位</th><th>售价</th><th>预警阈值</th><th>操作</th></tr></thead>
+                <tbody><tr v-for="g in goodsList" :key="g.id"><td>{{ g.id }}</td><td>{{ g.name }}</td><td>{{ g.spec }}</td><td>{{ g.unit }}</td><td>¥{{ g.price }}</td><td>{{ g.threshold }}</td>
+                  <td><button v-if="isAdmin" class="btn btn-text btn-small" @click="openGoodsForm(g)">编辑</button><button v-if="isAdmin" class="btn btn-danger btn-small ml-8" @click="deleteGoods(g.id)">删除</button></td></tr>
+                </tbody></table>
+              <div class="pagination"><button class="btn btn-text btn-small" @click="goodsPage--;loadGoods()" :disabled="goodsPage===0">上一页</button><span>{{ goodsPage+1 }} / {{ goodsTotalPages }}</span><button class="btn btn-text btn-small" @click="goodsPage++;loadGoods()" :disabled="goodsPage>=goodsTotalPages-1">下一页</button></div>
+            </div>
+          </div>
+
+          <!-- 其他页面使用 v-if 条件渲染 -->
+          <div v-if="page==='warehouse'">
+            <div class="card">
+              <div class="card-header"><span>仓库管理</span><button v-if="isAdmin" class="btn btn-primary btn-small" @click="openWarehouseForm(null)">新增仓库</button></div>
+              <div class="search-bar"><input v-model="warehouseSearch" placeholder="搜索编号/名称/地址"><button class="btn btn-primary btn-small" @click="warehouseSearch=''">清除</button></div>
+              <table><thead><tr><th>编号</th><th>名称</th><th>地址</th><th>容量</th><th>操作</th></tr></thead>
+                <tbody><tr v-for="w in filteredWarehouses" :key="w.id"><td>{{ w.id }}</td><td>{{ w.name }}</td><td>{{ w.address }}</td><td>{{ w.capacity }}</td>
+                  <td><button v-if="isAdmin" class="btn btn-text btn-small" @click="openWarehouseForm(w)">编辑</button><button v-if="isAdmin" class="btn btn-danger btn-small ml-8" @click="deleteWarehouse(w.id)">删除</button></td></tr>
+                </tbody></table>
+            </div>
+          </div>
+
+          <div v-if="page==='instock'">
+            <div class="card">
+              <div class="card-header"><span>入库管理</span><button v-if="canEditStock" class="btn btn-primary btn-small" @click="openInStockForm">新增入库</button></div>
+              <div class="search-bar"><input v-model="instockSearch" placeholder="搜索单号/商品"><button class="btn btn-primary btn-small" @click="instockSearch=''">清除</button></div>
+              <table><thead><tr><th>单号</th><th>商品</th><th>仓库</th><th>数量</th><th>时间</th><th>操作员</th></tr></thead>
+                <tbody><tr v-for="s in filteredInStock" :key="s.id"><td>{{ s.id }}</td><td>{{ s.goods?.name || s.goodsId }}</td><td>{{ s.warehouse?.name || s.warehouseId }}</td><td>{{ s.quantity }}</td><td>{{ s.date }}</td><td>{{ s.staffId }}</td></tr>
+                </tbody></table>
+            </div>
+          </div>
+
+          <div v-if="page==='outstock'">
+            <div class="card">
+              <div class="card-header"><span>出库管理</span><button v-if="canEditStock" class="btn btn-primary btn-small" @click="openOutStockForm">新增出库</button></div>
+              <div class="search-bar"><input v-model="outstockSearch" placeholder="搜索单号/商品"><button class="btn btn-primary btn-small" @click="outstockSearch=''">清除</button></div>
+              <table><thead><tr><th>单号</th><th>商品</th><th>仓库</th><th>数量</th><th>时间</th><th>操作员</th></tr></thead>
+                <tbody><tr v-for="s in filteredOutStock" :key="s.id"><td>{{ s.id }}</td><td>{{ s.goods?.name || s.goodsId }}</td><td>{{ s.warehouse?.name || s.warehouseId }}</td><td>{{ s.quantity }}</td><td>{{ s.date }}</td><td>{{ s.staffId }}</td></tr>
+                </tbody></table>
+            </div>
+          </div>
+
+          <div v-if="page==='inventory'">
+            <div class="card">
+              <div class="card-header"><span>库存查询</span></div>
+              <div class="search-bar"><input v-model="inventorySearch" placeholder="搜索商品/仓库"><button class="btn btn-primary btn-small" @click="inventorySearch=''">清除</button></div>
+              <table><thead><tr><th>商品编号</th><th>商品名称</th><th>仓库</th><th>库存数量</th><th>预警阈值</th><th>状态</th></tr></thead>
+                <tbody><tr v-for="i in filteredInventory" :key="i.goodsId+i.warehouseId">
+                  <td>{{ i.goodsId }}</td><td>{{ i.goods?.name }}</td><td>{{ i.warehouse?.name }}</td>
+                  <td><span :class="'tag ' + (i.goods && i.quantity <= i.goods.threshold ? 'tag-danger' : 'tag-success')">{{ i.quantity }}</span></td>
+                  <td>{{ i.goods?.threshold }}</td>
+                  <td><span :class="'tag ' + (i.goods && i.quantity <= i.goods.threshold ? 'tag-danger' : 'tag-success')">{{ i.goods && i.quantity <= i.goods.threshold ? '⚠ 预警' : '正常' }}</span></td>
+                </tr></tbody></table>
+            </div>
+          </div>
+
+          <div v-if="page==='supplier'">
+            <div class="card">
+              <div class="card-header"><span>供应商管理</span><button v-if="isAdmin" class="btn btn-primary btn-small" @click="openSupplierForm">新增供应商</button></div>
+              <div class="search-bar"><input v-model="supplierSearch" placeholder="搜索编号/名称/联系人"><button class="btn btn-primary btn-small" @click="supplierSearch=''">清除</button></div>
+              <table><thead><tr><th>编号</th><th>名称</th><th>联系人</th><th>电话</th><th>地址</th><th>操作</th></tr></thead>
+                <tbody><tr v-for="s in filteredSuppliers" :key="s.id"><td>{{ s.id }}</td><td>{{ s.name }}</td><td>{{ s.contact }}</td><td>{{ s.phone }}</td><td>{{ s.address }}</td>
+                  <td><button v-if="isAdmin" class="btn btn-danger btn-small" @click="deleteSupplier(s.id)">删除</button></td></tr>
+                </tbody></table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 商品表单弹窗 -->
+    <div class="modal-mask" v-if="showGoodsForm" @click.self="showGoodsForm=false">
+      <div class="modal">
+        <div class="modal-header">{{ goodsForm.isEdit ? '编辑商品' : '新增商品' }}</div>
+        <div class="modal-body">
+          <div class="form-group"><label>编号</label><input v-model="goodsForm.id" :disabled="goodsForm.isEdit"></div>
+          <div class="form-group"><label>名称</label><input v-model="goodsForm.name"></div>
+          <div class="form-group"><label>规格</label><input v-model="goodsForm.spec"></div>
+          <div class="form-group"><label>单位</label><input v-model="goodsForm.unit"></div>
+          <div class="form-group"><label>售价</label><input v-model.number="goodsForm.price" type="number" step="0.01"></div>
+          <div class="form-group"><label>预警阈值</label><input v-model.number="goodsForm.threshold" type="number"></div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-text" @click="showGoodsForm=false">取消</button><button class="btn btn-primary" @click="saveGoods" :disabled="goodsSaving">{{ goodsSaving ? '保存中...' : '保存' }}</button></div>
+      </div>
+    </div>
+
+    <!-- 仓库表单弹窗 -->
+    <div class="modal-mask" v-if="showWarehouseForm" @click.self="showWarehouseForm=false">
+      <div class="modal">
+        <div class="modal-header">{{ warehouseForm.isEdit ? '编辑仓库' : '新增仓库' }}</div>
+        <div class="modal-body">
+          <div class="form-group"><label>编号</label><input v-model="warehouseForm.id" :disabled="warehouseForm.isEdit"></div>
+          <div class="form-group"><label>名称</label><input v-model="warehouseForm.name"></div>
+          <div class="form-group"><label>地址</label><input v-model="warehouseForm.address"></div>
+          <div class="form-group"><label>容量</label><input v-model.number="warehouseForm.capacity" type="number"></div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-text" @click="showWarehouseForm=false">取消</button><button class="btn btn-primary" @click="saveWarehouse">保存</button></div>
+      </div>
+    </div>
+
+    <!-- 入库弹窗 -->
+    <div class="modal-mask" v-if="showInStockForm" @click.self="showInStockForm=false">
+      <div class="modal">
+        <div class="modal-header">新增入库单</div>
+        <div class="modal-body">
+          <div class="form-group"><label>入库单号</label><input v-model="instockForm.id"></div>
+          <div class="form-group"><label>商品编号</label><input v-model="instockForm.goodsId"></div>
+          <div class="form-group"><label>仓库编号</label><input v-model="instockForm.warehouseId"></div>
+          <div class="form-group"><label>供应商编号</label><input v-model="instockForm.supplierId"></div>
+          <div class="form-group"><label>入库数量</label><input v-model.number="instockForm.quantity" type="number" min="1"></div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-text" @click="showInStockForm=false">取消</button><button class="btn btn-primary" @click="saveInStock">保存</button></div>
+      </div>
+    </div>
+
+    <!-- 出库弹窗 -->
+    <div class="modal-mask" v-if="showOutStockForm" @click.self="showOutStockForm=false">
+      <div class="modal">
+        <div class="modal-header">新增出库单</div>
+        <div class="modal-body">
+          <div class="form-group"><label>出库单号</label><input v-model="outstockForm.id"></div>
+          <div class="form-group"><label>商品编号</label><input v-model="outstockForm.goodsId"></div>
+          <div class="form-group"><label>仓库编号</label><input v-model="outstockForm.warehouseId"></div>
+          <div class="form-group"><label>出库数量</label><input v-model.number="outstockForm.quantity" type="number" min="1"></div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-text" @click="showOutStockForm=false">取消</button><button class="btn btn-primary" @click="saveOutStock">保存</button></div>
+      </div>
+    </div>
+
+    <!-- 供应商弹窗 -->
+    <div class="modal-mask" v-if="showSupplierForm" @click.self="showSupplierForm=false">
+      <div class="modal">
+        <div class="modal-header">新增供应商</div>
+        <div class="modal-body">
+          <div class="form-group"><label>编号</label><input v-model="supplierForm.id"></div>
+          <div class="form-group"><label>名称</label><input v-model="supplierForm.name"></div>
+          <div class="form-group"><label>联系人</label><input v-model="supplierForm.contact"></div>
+          <div class="form-group"><label>电话</label><input v-model="supplierForm.phone"></div>
+          <div class="form-group"><label>地址</label><input v-model="supplierForm.address"></div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-text" @click="showSupplierForm=false">取消</button><button class="btn btn-primary" @click="saveSupplier">保存</button></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { createApp, ref, reactive, computed, watch, onMounted } = Vue;
+    const apiBase = location.port === '5173' ? '/api' : 'http://localhost:9090/api';
+    const api = axios.create({ baseURL: apiBase });
+
+    api.interceptors.request.use(cfg => {
+      const tid = localStorage.getItem('staffId');
+      if (tid) cfg.headers.Authorization = 'Bearer ' + tid;
+      return cfg;
+    });
+
+    api.interceptors.response.use(r => r, err => { if (err.response?.status === 401) { localStorage.clear(); location.reload(); } return Promise.reject(err); });
+
+    const app = createApp({
+      setup() {
+        const loggedIn = ref(false);
+        const loginId = ref(''); const loginPwd = ref(''); const loading = ref(false); const loginError = ref('');
+        const staffName = ref(''); const staffRole = ref(''); const page = ref('dashboard');
+        const goodsList = ref([]); const goodsPage = ref(0); const goodsSearch = ref('');
+        const goodsTotalPages = ref(0); const goodsSaving = ref(false);
+        const warehouses = ref([]); const suppliers = ref([]);
+        const instockList = ref([]); const outstockList = ref([]); const inventoryList = ref([]);
+        const totals = reactive({ goods: 0, warehouses: 0, suppliers: 0, warnings: 0 });
+        const warehouseSearch = ref('');
+        const supplierSearch = ref('');
+        const instockSearch = ref('');
+        const outstockSearch = ref('');
+        const inventorySearch = ref('');
+
+        const isAdmin = computed(() => staffRole.value === '管理员');
+        const isWarehouseAdmin = computed(() => staffRole.value === '仓库管理员');
+        const isStaff = computed(() => staffRole.value === '员工');
+        const roleLabel = computed(() => staffRole.value === '采购员' ? '员工' : staffRole.value);
+
+        const canGoods = computed(() => isAdmin.value || isWarehouseAdmin.value || isStaff.value);
+        const canWarehouse = computed(() => isAdmin.value || isWarehouseAdmin.value);
+        const canInStock = computed(() => isAdmin.value || isWarehouseAdmin.value || isStaff.value);
+        const canOutStock = computed(() => isAdmin.value || isWarehouseAdmin.value);
+        const canSupplier = computed(() => isAdmin.value || isStaff.value);
+        // 入库出库的增删改权限：管理员 + 仓库管理员
+        const canEditStock = computed(() => isAdmin.value || isWarehouseAdmin.value);
+
+        // 各表搜索过滤
+        const filteredWarehouses = computed(() => {
+          if (!warehouseSearch.value) return warehouses.value;
+          const kw = warehouseSearch.value.toLowerCase();
+          return warehouses.value.filter(w => (w.name||'').toLowerCase().includes(kw) || (w.id||'').toLowerCase().includes(kw) || (w.address||'').toLowerCase().includes(kw));
+        });
+        const filteredSuppliers = computed(() => {
+          if (!supplierSearch.value) return suppliers.value;
+          const kw = supplierSearch.value.toLowerCase();
+          return suppliers.value.filter(s => (s.name||'').toLowerCase().includes(kw) || (s.id||'').toLowerCase().includes(kw) || (s.contact||'').toLowerCase().includes(kw));
+        });
+        const filteredInStock = computed(() => {
+          if (!instockSearch.value) return instockList.value;
+          const kw = instockSearch.value.toLowerCase();
+          return instockList.value.filter(s => (s.id||'').toLowerCase().includes(kw) || (s.goods?.name||'').toLowerCase().includes(kw) || (s.goodsId||'').toLowerCase().includes(kw));
+        });
+        const filteredOutStock = computed(() => {
+          if (!outstockSearch.value) return outstockList.value;
+          const kw = outstockSearch.value.toLowerCase();
+          return outstockList.value.filter(s => (s.id||'').toLowerCase().includes(kw) || (s.goods?.name||'').toLowerCase().includes(kw) || (s.goodsId||'').toLowerCase().includes(kw));
+        });
+        const filteredInventory = computed(() => {
+          if (!inventorySearch.value) return inventoryList.value;
+          const kw = inventorySearch.value.toLowerCase();
+          return inventoryList.value.filter(i => (i.goodsId||'').toLowerCase().includes(kw) || (i.goods?.name||'').toLowerCase().includes(kw) || (i.warehouse?.name||'').toLowerCase().includes(kw));
+        });
+
+        const pageTitle = computed(() => {
+          const m = { dashboard: '首页', goods: '商品管理', warehouse: '仓库管理', instock: '入库管理', outstock: '出库管理', inventory: '库存查询', supplier: '供应商管理' };
+          return m[page.value] || '';
+        });
+
+        async function doLogin() {
+          if (!loginId.value || !loginPwd.value) { loginError.value = '请输入工号和密码'; return; }
+          loading.value = true; loginError.value = '';
+          try {
+            const r = await api.post('/auth/login', { staffId: loginId.value, password: loginPwd.value });
+            localStorage.setItem('staffId', r.data.staffId);
+            localStorage.setItem('staffName', r.data.staffName);
+            localStorage.setItem('staffRole', r.data.role);
+            staffName.value = r.data.staffName; staffRole.value = r.data.role;
+            loggedIn.value = true; loadDashboard();
+          } catch (e) { loginError.value = '工号或密码错误'; }
+          finally { loading.value = false; }
+        }
+
+        function logout() { localStorage.clear(); loggedIn.value = false; }
+
+        async function loadGoods() {
+          try {
+            const r = await api.get('/goods', { params: { name: goodsSearch.value || undefined, page: goodsPage.value, size: 10 } });
+            goodsList.value = r.data.content || []; goodsTotalPages.value = Math.ceil((r.data.totalElements || 0) / 10);
+          } catch (e) { alert('加载商品失败: ' + (e.response?.data?.message || e.message)); }
+        }
+
+        const showGoodsForm = ref(false);
+        const goodsForm = reactive({ isEdit: false, id: '', name: '', spec: '', unit: '', price: 0, threshold: 10 });
+
+        function openGoodsForm(g) {
+          goodsForm.isEdit = !!g;
+          if (g) { goodsForm.id = g.id; goodsForm.name = g.name; goodsForm.spec = g.spec; goodsForm.unit = g.unit; goodsForm.price = g.price; goodsForm.threshold = g.threshold; }
+          else { goodsForm.id = ''; goodsForm.name = ''; goodsForm.spec = ''; goodsForm.unit = ''; goodsForm.price = 0; goodsForm.threshold = 10; }
+          showGoodsForm.value = true;
+        }
+
+        async function saveGoods() {
+          goodsSaving.value = true;
+          try {
+            if (goodsForm.isEdit) { await api.put('/goods/' + goodsForm.id, goodsForm); alert('修改成功'); }
+            else { await api.post('/goods', goodsForm); alert('新增成功'); }
+            showGoodsForm.value = false; loadGoods(); loadDashboard();
+          } catch (e) { alert('操作失败: ' + (e.response?.data?.message || e.message)); }
+          finally { goodsSaving.value = false; }
+        }
+
+        async function deleteGoods(id) {
+          if (!confirm('确定删除该商品吗？')) return;
+          try { await api.delete('/goods/' + id); alert('删除成功'); loadGoods(); loadDashboard(); }
+          catch (e) { alert('删除失败: ' + (e.response?.data?.message || e.message)); }
+        }
+
+        // Warehouse
+        const showWarehouseForm = ref(false);
+        const warehouseForm = reactive({ isEdit: false, id: '', name: '', address: '', capacity: 100 });
+        async function loadWarehouses() { try { const r = await api.get('/warehouses'); warehouses.value = r.data || []; } catch {} }
+        function openWarehouseForm(w) {
+          warehouseForm.isEdit = !!w;
+          if (w) { warehouseForm.id = w.id; warehouseForm.name = w.name; warehouseForm.address = w.address; warehouseForm.capacity = w.capacity; }
+          else { warehouseForm.id = ''; warehouseForm.name = ''; warehouseForm.address = ''; warehouseForm.capacity = 100; }
+          showWarehouseForm.value = true;
+        }
+        async function saveWarehouse() {
+          try {
+            if (warehouseForm.isEdit) { await api.put('/warehouses/' + warehouseForm.id, warehouseForm); alert('修改成功'); }
+            else { await api.post('/warehouses', warehouseForm); alert('新增成功'); }
+            showWarehouseForm.value = false; loadWarehouses(); loadDashboard();
+          } catch (e) { alert('操作失败: ' + (e.response?.data?.message || e.message)); }
+        }
+        async function deleteWarehouse(id) {
+          if (!confirm('确定删除该仓库吗？')) return;
+          try { await api.delete('/warehouses/' + id); alert('删除成功'); loadWarehouses(); loadDashboard(); }
+          catch (e) { alert('删除失败: ' + (e.response?.data?.message || e.message)); }
+        }
+
+        // InStock
+        const showInStockForm = ref(false);
+        const instockForm = reactive({ id: '', goodsId: '', warehouseId: '', supplierId: '', quantity: 1 });
+        async function loadInStock() { try { const r = await api.get('/instock', { params: { page: 0, size: 20 } }); instockList.value = r.data.content || []; } catch {} }
+        function openInStockForm() { instockForm.id = 'I' + Date.now(); instockForm.goodsId = ''; instockForm.warehouseId = ''; instockForm.supplierId = ''; instockForm.quantity = 1; showInStockForm.value = true; }
+        async function saveInStock() {
+          try {
+            instockForm.staffId = localStorage.getItem('staffId');
+            await api.post('/instock', instockForm); alert('入库成功，库存已更新');
+            showInStockForm.value = false; loadInStock(); loadDashboard();
+          } catch (e) { alert('操作失败: ' + (e.response?.data?.message || e.message)); }
+        }
+
+        // OutStock
+        const showOutStockForm = ref(false);
+        const outstockForm = reactive({ id: '', goodsId: '', warehouseId: '', quantity: 1 });
+        async function loadOutStock() { try { const r = await api.get('/outstock', { params: { page: 0, size: 20 } }); outstockList.value = r.data.content || []; } catch {} }
+        function openOutStockForm() { outstockForm.id = 'O' + Date.now(); outstockForm.goodsId = ''; outstockForm.warehouseId = ''; outstockForm.quantity = 1; showOutStockForm.value = true; }
+        async function saveOutStock() {
+          try {
+            outstockForm.staffId = localStorage.getItem('staffId');
+            await api.post('/outstock', outstockForm); alert('出库成功，库存已扣减');
+            showOutStockForm.value = false; loadOutStock(); loadDashboard();
+          } catch (e) { alert('操作失败: ' + (e.response?.data?.message || e.message)); }
+        }
+
+        // Inventory
+        async function loadInventory() { try { const r = await api.get('/inventory'); inventoryList.value = r.data || []; } catch {} }
+
+        // Supplier
+        const showSupplierForm = ref(false);
+        const supplierForm = reactive({ id: '', name: '', contact: '', phone: '', address: '' });
+        async function loadSuppliers() { try { const r = await api.get('/suppliers'); suppliers.value = r.data || []; } catch {} }
+        function openSupplierForm() { supplierForm.id = ''; supplierForm.name = ''; supplierForm.contact = ''; supplierForm.phone = ''; supplierForm.address = ''; showSupplierForm.value = true; }
+        async function saveSupplier() {
+          try { await api.post('/suppliers', supplierForm); alert('新增成功'); showSupplierForm.value = false; loadSuppliers(); loadDashboard(); }
+          catch (e) { alert('操作失败: ' + (e.response?.data?.message || e.message)); }
+        }
+        async function deleteSupplier(id) {
+          if (!confirm('确定删除该供应商吗？')) return;
+          try { await api.delete('/suppliers/' + id); alert('删除成功'); loadSuppliers(); loadDashboard(); }
+          catch (e) { alert('删除失败: ' + (e.response?.data?.message || e.message)); }
+        }
+
+        async function loadDashboard() {
+          try {
+            const [g, w, s, inv] = await Promise.all([
+              api.get('/goods', { params: { page: 0, size: 1 } }),
+              api.get('/warehouses'), api.get('/suppliers'), api.get('/inventory')
+            ]);
+            totals.goods = g.data.totalElements || 0;
+            totals.warehouses = (w.data || []).length;
+            totals.suppliers = (s.data || []).length;
+            const low = (inv.data || []).filter(i => i.goods && i.quantity <= i.goods.threshold);
+            totals.warnings = low.length;
+          } catch {}
+        }
+
+        // Watch page changes to load data
+        watch(page, (p) => {
+          if (p === 'goods') loadGoods();
+          else if (p === 'warehouse') loadWarehouses();
+          else if (p === 'instock') loadInStock();
+          else if (p === 'outstock') loadOutStock();
+          else if (p === 'inventory') loadInventory();
+          else if (p === 'supplier') loadSuppliers();
+          else if (p === 'dashboard') loadDashboard();
+        });
+
+        onMounted(() => {
+          const sid = localStorage.getItem('staffId');
+          if (sid) {
+            staffName.value = localStorage.getItem('staffName') || '';
+            staffRole.value = localStorage.getItem('staffRole') || '';
+            loggedIn.value = true;
+            loadDashboard();
+          }
+        });
+
+        return {
+          loggedIn, loginId, loginPwd, loading, loginError, doLogin, logout,
+          staffName, staffRole, page, pageTitle, totals,
+          canGoods, canWarehouse, canInStock, canOutStock, canSupplier,
+          isAdmin, canEditStock, roleLabel,
+          goodsList, goodsPage, goodsSearch, goodsTotalPages, loadGoods, goodsSaving,
+          showGoodsForm, goodsForm, openGoodsForm, saveGoods, deleteGoods,
+          warehouses, filteredWarehouses, warehouseSearch,
+          showWarehouseForm, warehouseForm, openWarehouseForm, saveWarehouse, deleteWarehouse,
+          instockList, filteredInStock, instockSearch,
+          showInStockForm, instockForm, openInStockForm, saveInStock,
+          outstockList, filteredOutStock, outstockSearch,
+          showOutStockForm, outstockForm, openOutStockForm, saveOutStock,
+          inventoryList, filteredInventory, inventorySearch,
+          suppliers, filteredSuppliers, supplierSearch,
+          showSupplierForm, supplierForm, openSupplierForm, saveSupplier, deleteSupplier
+        };
+      }
+    });
+
+    app.mount('#app');
+  </script>
+</body>
+</html>
